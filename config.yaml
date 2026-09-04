@@ -1,0 +1,25 @@
+subscription_urls:
+  - "https://raw.githubusercontent.com/zhuhaiuk/free-nodes/main/nodes.txt"
+  - "https://raw.githubusercontent.com/mfuu/v2ray/master/v2ray"
+  - "https://github.com/Au1rxx/free-vpn-subscriptions/raw/main/output/v2ray-base64.txt"
+  - "https://raw.githubusercontent.com/ebrasha/free-v2ray-public-list/refs/heads/main/V2Ray-Config-By-EbraSha.txt"
+  - "https://xmxosfepggzm.503403.xyz"
+  - "https://d.zrfme.com/vless-all"
+  - "https://ghfast.top/https://raw.githubusercontent.com/free18/v2ray/refs/heads/main/v.txt"
+  - "https://raw.githubusercontent.com/free-nodes/v2rayfree/main/sub"
+  - "https://www.ermao.net/sub/v2ray/ermao.net"
+
+telegram_channels:
+  - "free_v2ray"
+  - "v2rayfree"
+  - "v2ray_free_conf"
+  - "SSRList"
+  - "NodeFree"
+
+settings:
+  max_nodes_export: 200      # 最终保留最高速节点数
+  min_speed_mbps: 1.0        # 最低通过速度 (MB/s)
+  stage1_timeout: 1.5        # 连通性测试超时 (秒)
+  stage2_duration: 3.0       # 带宽测速持续时间 (秒)
+  test_204_url: "https://cp.cloudflare.com/generate_204"
+  test_speed_url: "https://speed.cloudflare.com/__down?bytes=10000000"
