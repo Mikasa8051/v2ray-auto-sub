@@ -1,0 +1,20 @@
+# 订阅链接与 TG 频道配置
+subscription_urls:
+  - "https://raw.githubusercontent.com/zhuhaiuk/free-nodes/main/nodes.txt"
+  - "https://raw.githubusercontent.com/mfuu/v2ray/master/v2ray"
+  - "https://github.com/Au1rxx/free-vpn-subscriptions/raw/main/output/v2ray-base64.txt"
+  - "https://raw.githubusercontent.com/free18/v2ray/refs/heads/main/v.txt"
+  - "https://raw.githubusercontent.com/free-nodes/v2rayfree/main/sub"
+
+telegram_channels:
+  - "v2rayfree"
+  - "v2ray_free_conf"
+  - "SSRList"
+  - "NodeFree"
+  - "v2ray_vpn_sub"
+
+settings:
+  max_nodes_export: 100
+  connect_timeout: 3.0
+  max_concurrency: 20
+  local_proxy_ports: [7890, 10809, 20809, 2080, 10808, 1080]
