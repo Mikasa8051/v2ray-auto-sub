@@ -1,9 +1,14 @@
+# .github/workflows/auto_collect.yml
 name: Auto Collect Nodes
 
 on:
   schedule:
-    - cron: '0 */6 * * *' # 每 6 小时自动运行一次
-  workflow_dispatch:
+    - cron: '0 */6 * * *' # 每 6 小时自动触发
+  workflow_dispatch:     # 支持手动触发
+
+# 显式赋予工作流写入权限，解决 Git Push 403 报错
+permissions:
+  contents: write
 
 jobs:
   build:
