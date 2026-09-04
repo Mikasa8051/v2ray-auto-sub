@@ -1,175 +1,45 @@
 import asyncio
-import base64
-import html
-import json
-import re
-import socket
-from urllib.parse import unquote
-import aiohttp
-from bs4 import BeautifulSoup
+import logging
+import yaml
+from core.fetcher import fetch_all_sources
+from core.parser import extract_all_nodes
+from core.cleaner import deduplicate_and_clean
+from core.validator import batch_validate
+from core.exporter import export_subscriptions
 
-TARGET_CHANNELS = [
-    "v2rayfree",
-    "v2ray_free_conf",
-    "SSRList",
-    "NodeFree",
-    "v2ray_vpn_sub"
-]
-
-COMMON_PROXY_PORTS = [7890, 10809, 20809, 2080, 10808, 1080]
-
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-}
-
-NODE_REGEX = re.compile(
-    r'(?:vmess|vless|ssr|ss|trojan|hysteria2|hy2|hysteria|hy|tuic|socks5|socks|wireguard|wg|juicity)://[^\s<>"\']+',
-    re.IGNORECASE
-)
-
-PROTOCOL_MAP = {
-    "vless": "VLESS",
-    "vmess": "VMess",
-    "hysteria2": "Hysteria2",
-    "hy2": "Hysteria2",
-    "hysteria": "Hysteria",
-    "hy": "Hysteria",
-    "trojan": "Trojan",
-    "ss": "Shadowsocks",
-    "ssr": "ShadowsocksR",
-    "tuic": "TUIC",
-    "socks5": "Socks5",
-    "socks": "Socks5",
-    "wireguard": "WireGuard",
-    "wg": "WireGuard",
-    "juicity": "Juicity"
-}
-
-def find_working_local_proxy() -> str | None:
-    for port in COMMON_PROXY_PORTS:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-            sock.settimeout(0.3)
-            if sock.connect_ex(('127.0.0.1', port)) == 0:
-                return f"http://127.0.0.1:{port}"
-    return None
-
-async def fetch_channel_nodes(session: aiohttp.ClientSession, channel: str, proxy_url: str | None) -> list[str]:
-    url = f"https://t.me/s/{channel}"
-    try:
-        async with session.get(url, headers=HEADERS, proxy=proxy_url, timeout=aiohttp.ClientTimeout(total=12)) as resp:
-            if resp.status != 200:
-                return []
-
-            raw_html = await resp.text()
-            soup = BeautifulSoup(html.unescape(raw_html), 'html.parser')
-
-            text_blocks = []
-            for a_tag in soup.find_all('a', href=True):
-                if NODE_REGEX.search(a_tag['href']):
-                    text_blocks.append(a_tag['href'])
-
-            for elem in soup.find_all(['code', 'pre', 'div', 'span']):
-                text_blocks.append(elem.get_text(strip=True))
-
-            text_blocks.append(soup.get_text(separator='\n'))
-
-            found_nodes = []
-            for block in text_blocks:
-                matches = NODE_REGEX.findall(block)
-                for node in matches:
-                    clean_node = node.strip().rstrip('.,;)]}')
-                    if len(clean_node) > 10:
-                        found_nodes.append(clean_node)
-            return found_nodes
-    except Exception:
-        return []
-
-def validate_and_extract_key(node_url: str) -> tuple[str, str, str] | None:
-    node_url = node_url.strip().rstrip('.,;)]}')
-    if "://" not in node_url:
-        return None
-
-    scheme, _, rest = node_url.partition("://")
-    scheme = scheme.lower()
-    if scheme not in PROTOCOL_MAP:
-        return None
-
-    protocol_name = PROTOCOL_MAP[scheme]
-
-    if scheme == "vmess":
-        try:
-            b64_str = rest.split("#")[0]
-            b64_str += "=" * (-len(b64_str) % 4)
-            decoded_bytes = base64.b64decode(b64_str)
-            config = json.loads(decoded_bytes.decode('utf-8', errors='ignore'))
-            
-            server = config.get("add") or config.get("host")
-            port = config.get("port")
-            uuid = config.get("id")
-            
-            if not server or not port or not uuid:
-                return None
-            
-            dedup_key = f"vmess://{server}:{port}/{uuid}"
-            return protocol_name, dedup_key, node_url
-        except Exception:
-            return None
-
-    try:
-        main_part = rest.split("#")[0]
-        if not main_part or len(main_part) < 6:
-            return None
-            
-        dedup_key = f"{protocol_name}://{unquote(main_part).lower()}"
-        return protocol_name, dedup_key, node_url
-    except Exception:
-        return None
-
-def process_and_deduplicate(raw_nodes: list[str]) -> list[str]:
-    seen_keys = set()
-    unique_nodes = []
-
-    for raw in raw_nodes:
-        res = validate_and_extract_key(raw)
-        if not res:
-            continue
-
-        _, dedup_key, clean_url = res
-        if dedup_key in seen_keys:
-            continue
-
-        seen_keys.add(dedup_key)
-        unique_nodes.append(clean_url)
-
-    return unique_nodes
-
-def export_subscriptions(nodes: list[str]):
-    plain_content = "\n".join(nodes)
-    
-    with open("nodes.txt", "w", encoding="utf-8") as f:
-        f.write(plain_content)
-
-    b64_content = base64.b64encode(plain_content.encode("utf-8")).decode("utf-8")
-    with open("sub.txt", "w", encoding="utf-8") as f:
-        f.write(b64_content)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 async def main():
-    proxy_url = find_working_local_proxy()
-    
-    connector = aiohttp.TCPConnector(ssl=False)
-    async with aiohttp.ClientSession(connector=connector) as session:
-        tasks = [fetch_channel_nodes(session, ch, proxy_url) for ch in TARGET_CHANNELS]
-        results = await asyncio.gather(*tasks)
+    # 1. 加载配置
+    with open("config.yaml", "r", encoding="utf-8") as f:
+        cfg = yaml.safe_load(f)
 
-    all_raw_nodes = []
-    for nodes in results:
-        all_raw_nodes.extend(nodes)
+    # 2. 抓取网页源与 TG 频道
+    logging.info("1. 开始高并发拉取订阅源与 Telegram 频道页面...")
+    raw_sources = await fetch_all_sources(
+        cfg.get("subscription_urls", []),
+        cfg.get("telegram_channels", []),
+        cfg["settings"].get("local_proxy_ports", [7890, 10809])
+    )
 
-    unique_nodes = process_and_deduplicate(all_raw_nodes)
+    # 3. DOM 树解析与节点提取
+    logging.info("2. 深度解析 HTML 与 Base64 密文块...")
+    raw_nodes = extract_all_nodes(raw_sources)
+    logging.info(f"初步提取到节点链接: {len(raw_nodes)} 个")
 
-    if unique_nodes:
-        export_subscriptions(unique_nodes)
-        print(f"🎉 成功抓取并清洗节点，共计 {len(unique_nodes)} 个，已写入 sub.txt 和 nodes.txt")
+    # 4. 协议去重与格式清洗
+    logging.info("3. 提取协议关键 Key 进行高精度去重与格式清洗...")
+    clean_nodes = deduplicate_and_clean(raw_nodes)
+    logging.info(f"清洗去重后有效节点: {len(clean_nodes)} 个")
+
+    # 5. 快速存活探测
+    logging.info("4. 启动并发 TCP 端口握手检测...")
+    valid_nodes = await batch_validate(clean_nodes, cfg)
+
+    # 6. 导出最终文件
+    logging.info("5. 导出 nodes.txt (明文) 与 sub.txt (Base64)...")
+    export_subscriptions(valid_nodes, cfg["settings"]["max_nodes_export"])
+    logging.info("🎉 全流程运行完毕！")
 
 if __name__ == "__main__":
     asyncio.run(main())
