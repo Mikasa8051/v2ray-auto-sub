@@ -1,12 +1,10 @@
-# .github/workflows/auto_collect.yml
 name: Auto Collect Nodes
 
 on:
   schedule:
-    - cron: '0 */6 * * *' # 每 6 小时自动触发
-  workflow_dispatch:     # 支持手动触发
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
 
-# 显式赋予工作流写入权限，解决 Git Push 403 报错
 permissions:
   contents: write
 
@@ -26,6 +24,15 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
+
+      - name: Install sing-box
+        run: |
+          SING_BOX_VERSION=$(curl -s https://api.github.com/repos/SagerNet/sing-box/releases/latest | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
+          echo "Installing sing-box v${SING_BOX_VERSION}..."
+          curl -Lo sing-box.tar.gz "https://github.com/SagerNet/sing-box/releases/download/v${SING_BOX_VERSION}/sing-box-${SING_BOX_VERSION}-linux-amd64.tar.gz"
+          tar -xzf sing-box.tar.gz
+          sudo mv sing-box-${SING_BOX_VERSION}-linux-amd64/sing-box /usr/local/bin/
+          sing-box version
 
       - name: Run Main Collector
         run: python main.py
