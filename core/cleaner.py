@@ -4,7 +4,6 @@ from urllib.parse import unquote
 from core.parser import PROTOCOL_MAP
 
 def validate_and_extract_key(node_url: str) -> tuple[str, str] | None:
-    """提取协议唯一 Dedup Key，防止别名重复节点"""
     node_url = node_url.strip().rstrip('.,;)]}')
     if "://" not in node_url:
         return None
@@ -16,6 +15,7 @@ def validate_and_extract_key(node_url: str) -> tuple[str, str] | None:
 
     protocol_name = PROTOCOL_MAP[scheme]
 
+    # VMess 解包 JSON 比对 server:port/id
     if scheme == "vmess":
         try:
             b64_str = rest.split("#")[0]
@@ -35,6 +35,7 @@ def validate_and_extract_key(node_url: str) -> tuple[str, str] | None:
         except Exception:
             return None
 
+    # 其余协议去除 # 后的节点名称后比对
     try:
         main_part = rest.split("#")[0]
         if not main_part or len(main_part) < 6:
@@ -46,11 +47,8 @@ def validate_and_extract_key(node_url: str) -> tuple[str, str] | None:
         return None
 
 def deduplicate_and_clean(raw_nodes: list[str]) -> list[str]:
-    """去重与垃圾节点过滤"""
     seen_keys = set()
     unique_nodes = []
-
-    # 简单过滤黑名单IP或非法主机
     invalid_keywords = ["127.0.0.1", "localhost", "0.0.0.0"]
 
     for raw in raw_nodes:
