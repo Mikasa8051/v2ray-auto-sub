@@ -1,5 +1,5 @@
-ss://YWVzLTI1Ni1nY206WlJwZ2FCZUd4dEVOSVhndmhwa1pCS3o5R25XUlMyZFljeDlPK2EyaXdOND0=@202.50.253.36:19999#IT%20-%20zhuhai.uk%2002
+ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpLRV9pNkNMbnM3N2tfY1FVWDhXUWlhLUwzRENTV1ZmVQ@dns3.m3hrzd.ir:8044#filembad-7🚀Need
+ss://YWVzLTI1Ni1nY206WlJwZ2FCZUd4dEVOSVhndmhwa1pCS3o5R25XUlMyZFljeDlPK2EyaXdOND0@202.50.253.18:19999#ProxyMtpVPN-34🚀Need
 vless://6c688f63-fad4-45d8-a6a1-1e978ed26b8b@static.114.180.233.167.clients.your-server.de:443?encryption=none&security=tls&type=tcp&sni=static.196.249.107.91.clients.your-server.de&alpn=h2%2Chttp%2F1.1&flow=xtls-rprx-vision&fp=chrome#%F0%9F%87%A9%F0%9F%87%AA_%E5%BE%B7%E5%9B%BD_32
 vless://6c688f63-fad4-45d8-a6a1-1e978ed26b8b@static.114.180.233.167.clients.your-server.de:443?encryption=none&security=tls&type=tcp&sni=static.196.249.107.91.clients.your-server.de&flow=xtls-rprx-vision&fp=chrome#%F0%9F%87%A9%F0%9F%87%AA_%E5%BE%B7%E5%9B%BD_21
-ss://YWVzLTI1Ni1nY206WlJwZ2FCZUd4dEVOSVhndmhwa1pCS3o5R25XUlMyZFljeDlPK2EyaXdOND0=@202.50.253.63:19999#IT%20-%20zhuhai.uk
 trojan://e26a229d-e8f2-4ff9-8c7d-58a9d83ee437@139.180.146.200:8886?security=tls&type=tcp&sni=139.180.146.200#%F0%9F%87%B8%F0%9F%87%AC_%E6%96%B0%E5%8A%A0%E5%9D%A1_40
